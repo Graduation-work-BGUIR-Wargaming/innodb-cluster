@@ -9,3 +9,24 @@ https://docs.oracle.com/cd/E17952_01/mysql-5.7-en/mysql-innodb-cluster-productio
 
 ### Запуск
 Для запуска необходим вагрант. После провижинга хостов на данном этапе необходимо вручную с mysql-shell ноды создать кластер. Так же вручную инициализировать mysql-router.
+
+### Инициализация кластера
+
+Все действия производятся на хосте ```mysql-shell```
+
+```sudo mysqlsh --uri admin@node1 -e "dba.createCluster('clTest');```
+
+```sudo mysqlsh --uri admin@node1 -e "dba.getCluster().addInstance('admin@node2');"```
+
+```sudo mysqlsh --uri admin@node1 -e "dba.getCluster().addInstance('admin@node3');"```
+
+### Просмотр состояния
+```sudo mysqlsh --uri admin@node1 -e "dba.getCluster().status()"```
+
+### Инициализация и запуск ```mysql-router```
+
+```mysqlrouter --bootstrap admin@node1 --user=mysqlrouter```
+```mysqlrouter&```
+
+#### Подключение к кластеру
+```mysql -u admin -p -P6446 -h 127.0.0.1```

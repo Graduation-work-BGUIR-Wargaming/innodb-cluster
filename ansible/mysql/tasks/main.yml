@@ -45,10 +45,3 @@
 
 - name: Start the MySQL service
   service: name=mysqld state=restarted enabled=yes
-
-#     - "GRANT ALL ON mysql.proc TO '{{ mysql_db_user1 }}';"
-#     - "CREATE USER {{ mysql_db_user2 }} IDENTIFIED WITH mysql_native_password BY '{{ mysql_db_user2_password }}';"
-#     - "GRANT ALL ON {{ mysql_db }}.* TO '{{ mysql_db_user2 }}';"
-#     - "CREATE USER '{{ mysql_1c_exchange }}' IDENTIFIED WITH mysql_native_password BY '{{ mysql_1c_exchange_password }}';"
-#     - "GRANT ALL ON {{ mysql_db }}.* TO '{{ mysql_1c_exchange }}';"
-

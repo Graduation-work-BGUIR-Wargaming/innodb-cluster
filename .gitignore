@@ -2,3 +2,5 @@
 notes.*
 *.retry
 *.sql
+Vagrantfile.stranger
+*gitignore*
