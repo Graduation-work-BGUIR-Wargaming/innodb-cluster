@@ -1,0 +1,54 @@
+---
+- name: Install MySQL server
+  yum: 
+    name: mysql-community-server
+    state: present
+  
+
+- name: Start the MySQL service
+  service: name=mysqld state=restarted enabled=yes
+
+- name: Acquire temporary root pass
+  shell: awk '$0 ~ "temporary password" {print $13}' /var/log/mysqld.log
+  register: mysql_temp_password
+
+- name: debug out
+  debug: msg="{{ mysql_temp_password.stdout }}"
+
+- name: Copy .my.cnf file with root password credentials
+  template:
+      src: ".my.cnf.j2"
+      dest: "/root/.my.cnf"
+      owner: root
+      group: root
+      mode: 0600
+  when: mysql_temp_password is defined
+
+- name: Test temporary root password expired
+  shell: "mysql -NBe 'SELECT NOW();'"
+  register: mysql_temp_password_result
+  when: mysql_temp_password is defined
+  ignore_errors: yes
+
+- name: Update mysql root password
+  shell: mysql -u root --password="{{ mysql_temp_password.stdout }}" -NBe 'ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "{{ mysql_root_password }}";' --connect-expired-password
+  when: mysql_temp_password is defined
+
+- name: Create users and grant privileges
+  shell: mysql -u root --password="{{ mysql_root_password }}" -NBe "{{ item }}"
+  with_items:
+     - "CREATE USER {{ mysql_admin_username }} IDENTIFIED WITH mysql_native_password BY '{{ mysql_admin_password }}';"
+     - "GRANT ALL PRIVILEGES ON *.* TO '{{ mysql_admin_username }}' WITH GRANT OPTION;"
+
+- name: Prepare host to InnoDB Cluster
+  shell: echo "{{ mysql_admin_password }}" | mysqlsh -e "dba.configureLocalInstance('{{ mysql_admin_username }}@{{ inventory_hostname }}:3306');" --passwords-from-stdin
+
+- name: Start the MySQL service
+  service: name=mysqld state=restarted enabled=yes
+
+#     - "GRANT ALL ON mysql.proc TO '{{ mysql_db_user1 }}';"
+#     - "CREATE USER {{ mysql_db_user2 }} IDENTIFIED WITH mysql_native_password BY '{{ mysql_db_user2_password }}';"
+#     - "GRANT ALL ON {{ mysql_db }}.* TO '{{ mysql_db_user2 }}';"
+#     - "CREATE USER '{{ mysql_1c_exchange }}' IDENTIFIED WITH mysql_native_password BY '{{ mysql_1c_exchange_password }}';"
+#     - "GRANT ALL ON {{ mysql_db }}.* TO '{{ mysql_1c_exchange }}';"
+

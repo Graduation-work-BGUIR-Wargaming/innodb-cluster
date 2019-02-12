@@ -1,0 +1,51 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+   - name: Add repository
+     yum:
+       name: https://dev.mysql.com/get/mysql80-community-release-el7-2.noarch.rpm
+       state: present
+
+   - name: disable old repository
+     shell: yum-config-manager {{ item }}
+     with_items:
+      - "--disable mysql57-community"
+      - "--enable mysql80-community"
+
+   - name: Install tools and dependies
+     yum:
+       name: ["net-tools","tcpdump"]
+       state: present
+
+   - name: disable selinux
+     selinux:
+       state: disabled
+
+- hosts: all
+  gather_facts: no
+  become: yes
+  tasks:
+   - name: Install mysql-shell
+     yum:
+       name: mysql-shell
+       state: present
+
+- hosts: mysql-router
+  gather_facts: no
+  become: yes
+  tasks:
+   - name: Install mysql-router
+     yum:
+       name: mysql-router
+       state: present
+
+# Setting node
+- hosts: "{{ var_host | default('node') }}"
+  become: yes
+  gather_facts: no
+  roles:
+     - mysql
+  
+
